@@ -21,3 +21,4 @@ class QueueProcess:
   def terminate(self):
     for process in self.processes:
       process.terminate()
+      process.join()
