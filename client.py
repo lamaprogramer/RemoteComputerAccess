@@ -43,6 +43,7 @@ def processImage(inputQueue, outputQueue):
 
 def createSocket(ip, port):
   client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+  client_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 2**20)
   client_socket.connect((ip, port))
   return client_socket
 

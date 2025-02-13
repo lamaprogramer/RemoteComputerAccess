@@ -71,6 +71,8 @@ def sendScreenshot(inputQueue: multiprocessing.Queue, outputQueue: multiprocessi
 
 def createSocket(ip, port):
   server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+  server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 2**20)
+  server_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
   server_socket.bind((ip, port))
   
   try:

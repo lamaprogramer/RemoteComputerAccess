@@ -18,7 +18,7 @@ class ImagePacket:
   @staticmethod
   def to_bytes(width=0, height=0, data=b''):
     header_format = "<lhhh"
-    compressed_data = zlib.compress(data, level=2)
+    compressed_data = zlib.compress(data, level=4)
     data_size = struct.calcsize(header_format) + len(compressed_data)
     return struct.pack(header_format, data_size, 0, width, height) + compressed_data
   
