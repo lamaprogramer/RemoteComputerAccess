@@ -1,3 +1,6 @@
+PORT = 8089
+IP = '0.0.0.0'
+
 THREAD_COUNT = 5
 PROCESS_COUNT = 2
 

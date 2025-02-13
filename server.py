@@ -69,9 +69,9 @@ def sendScreenshot(inputQueue: multiprocessing.Queue, outputQueue: multiprocessi
   finally:
     print("Thread closed successfully.")
 
-def createSocket(port):
+def createSocket(ip, port):
   server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-  server_socket.bind(('localhost', port))
+  server_socket.bind((ip, port))
   
   try:
     print("Waiting for Connection.")
@@ -82,7 +82,7 @@ def createSocket(port):
   return server_socket
 
 def main():
-  server_socket = createSocket(8089)
+  server_socket = createSocket(IP ,PORT)
   connection, address = server_socket.accept()
   print("Connected.")
   
@@ -91,7 +91,7 @@ def main():
     cpu_task=packageScreenshot, 
     connection=connection, 
     queue_size=IMAGE_QUEUE_SIZE, 
-    thread_count=THREAD_COUNT, 
+    thread_count=THREAD_COUNT,
     process_count=PROCESS_COUNT
   ).build()
   

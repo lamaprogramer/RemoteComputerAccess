@@ -41,13 +41,13 @@ def processImage(inputQueue, outputQueue):
       image = cv2.cvtColor(np_array, cv2.COLOR_RGB2BGR)
       outputQueue.put(image)
 
-def createSocket(port):
+def createSocket(ip, port):
   client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-  client_socket.connect(('localhost', port))
+  client_socket.connect((ip, port))
   return client_socket
 
 def main():
-  client_socket = createSocket(8089)
+  client_socket = createSocket(IP, PORT)
   print("Connected To Server.")
   
   image_multiprocessor = multiprocessor.Multiprocessor(
