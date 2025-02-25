@@ -13,24 +13,6 @@ from util.protocal import ImagePacket
 program_running_event = Event()
 program_running_event.set()
 
-def reciveMedia(sock):
-  buf = bytearray()
-  header = sock.recv(6)
-  if not header:
-    return None
-  
-  size, id = struct.unpack("<lh", header)
-  size -= 6
-  
-  while size > 0:
-    data = sock.recv(size)
-    if not data:
-      return None
-    buf.extend(data)
-    size -= len(data)
-    
-  return (id, bytes(buf))
-
 class ImageMultiprocessor(multiprocessor.Multiprocessor):
   def __init__(self, 
       io_task: Callable[[multiprocessing.Queue, Any], None] = None, 
@@ -56,42 +38,38 @@ def packageScreenshot(inputQueue: multiprocessing.Queue, outputQueue: multiproce
       if not outputQueue.full():
         image_bytes = sct.grab(bounding_box).rgb
         packet = ImagePacket.to_bytes(bounding_box["width"], bounding_box["height"], image_bytes)
+        #print("create image")
         outputQueue.put(packet)
 
 def sendScreenshot(inputQueue: multiprocessing.Queue, outputQueue: multiprocessing.Queue, connection):
   try:
+    conn, address = connection
     while program_running_event.is_set():
       packet = outputQueue.get()
       if packet is not None:
-        connection.sendall(packet)
+        #connection.sendall(packet)
+        #print("sent")
+        sendMedia(conn, address, packet, MAX_PACKET_SIZE)
+        #conn.sendto(packet, address)
   except (ConnectionAbortedError, ConnectionResetError):
     print("Client Force Closed.")
   finally:
     print("Thread closed successfully.")
 
-def createSocket(ip, port):
-  server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-  server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 2**20)
-  server_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+def createUDPSocket(ip, port):
+  server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+  server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
   server_socket.bind((ip, port))
-  
-  try:
-    print("Waiting for Connection.")
-    server_socket.listen(5)
-  except (KeyboardInterrupt, ConnectionAbortedError) as e:
-    return None
-
-  return server_socket
+  return (server_socket, (ip, port))
 
 def main():
-  server_socket = createSocket(IP ,PORT)
-  connection, address = server_socket.accept()
+  server_socket, address = createUDPSocket(*SERVER_ADDRESS)
   print("Connected.")
   
   image_multiprocessor = ImageMultiprocessor(
     io_task=sendScreenshot, 
     cpu_task=packageScreenshot, 
-    connection=connection, 
+    connection=(server_socket, CLIENT_ADDRESS), 
     queue_size=IMAGE_QUEUE_SIZE, 
     thread_count=THREAD_COUNT,
     process_count=PROCESS_COUNT
@@ -103,22 +81,17 @@ def main():
   def shutdown():
     print("Shutting Down.")
     program_running_event.clear()
-    
     image_multiprocessor.stopIOTasks()
     image_multiprocessor.stopCPUTasks()
-    
-    connection.close()
     server_socket.close()
 
   try:
     while program_running_event.is_set():
-      data = reciveMedia(connection)
-      if data is None:
-        break
+      pass
   except (KeyboardInterrupt, ConnectionAbortedError, ConnectionResetError) as e:
     print("Connection Reset.")
   finally:
-    shutdown()
+    pass
 
 if __name__ == "__main__":
   main()
