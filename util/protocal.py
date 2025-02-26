@@ -24,8 +24,9 @@ class ImagePacket:
   
   @staticmethod
   def from_bytes(raw_bytes):
-    image_dimensions = struct.unpack_from("<hh", raw_bytes, 0)
-    return (image_dimensions[0], image_dimensions[1], zlib.decompress(raw_bytes[4:]))
+    header_format = "<lhhh"
+    image_dimensions = struct.unpack_from(header_format, raw_bytes, 0)
+    return (image_dimensions[2], image_dimensions[3], zlib.decompress(raw_bytes[struct.calcsize(header_format):]))
 
 class ExitPacket:
   

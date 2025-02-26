@@ -8,16 +8,23 @@ class UDPSender:
     self.address = address
   
   def send(self, packet_id, data, chunk_size): 
-    print(f"Starting Size: {len(data)}")
-    s = 0
     for chunk in self._getChunk(packet_id, data, chunk_size):
       self.sock.sendto(chunk, self.address)
-      s += len(chunk)
-      #print(f"Sent chunk of size {len(chunk)} to {address}")
-    print(f"End Size: {s}")
+    print(f"Packet Id: {packet_id}, Size: {len(data)}")
+    
+  def calcMaxChunks(self, data_size, chunk_size):
+    prev_chunk_count = 0
+    chunk_count = math.ceil(data_size / float(chunk_size))
+
+    while chunk_count != prev_chunk_count:
+        prev_chunk_count = chunk_count
+        true_data_size = data_size + udp_packet.PACKET_HEADER_SIZE + (udp_packet.PACKET_SEQUENCE_SIZE * (chunk_count - 1))
+        chunk_count = math.ceil(true_data_size / float(chunk_size))
+
+    return chunk_count
     
   def _getChunk(self, packet_id, data, chunk_size):
-    max_chunks = math.ceil(len(data) / float(chunk_size))
+    max_chunks = self.calcMaxChunks(len(data), chunk_size)
     
     collected_data = 0
     created_chunks = 0
